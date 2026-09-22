@@ -1,0 +1,234 @@
+import json
+import os
+from datetime import datetime
+
+DATA_FILE = "expenses.json"
+
+
+# Load expenses from JSON file
+def load_expenses():
+    if not os.path.exists(DATA_FILE):
+        return []
+
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+# Save expenses to JSON file
+def save_expenses(expenses):
+    with open(DATA_FILE, "w", encoding="utf-8") as file:
+        json.dump(expenses, file, indent=4)
+
+
+# Generate a new expense ID
+def next_id(expenses):
+    return max((expense["id"] for expense in expenses), default=0) + 1
+
+
+# Add a new expense
+def add_expense(expenses):
+    print("\n--- Add Expense ---")
+
+    try:
+        amount = float(input("Enter amount: ₹"))
+
+        if amount <= 0:
+            print("Amount must be greater than zero.")
+            return
+
+    except ValueError:
+        print("Please enter a valid amount.")
+        return
+
+    category = input(
+        "Enter category (Food/Travel/Shopping/Bills/Other): "
+    ).strip().title()
+
+    if not category:
+        category = "Other"
+
+    description = input("Enter description: ").strip()
+
+    expense = {
+        "id": next_id(expenses),
+        "amount": amount,
+        "category": category,
+        "description": description,
+        "date": datetime.now().strftime("%Y-%m-%d")
+    }
+
+    expenses.append(expense)
+    save_expenses(expenses)
+
+    print("Expense added successfully!")
+
+
+# Display all expenses
+def view_expenses(expenses):
+    print("\n--- All Expenses ---")
+
+    if not expenses:
+        print("No expenses recorded.")
+        return
+
+    print("-" * 85)
+    print(
+        f"{'ID':<6}"
+        f"{'Amount':<15}"
+        f"{'Category':<18}"
+        f"{'Description':<28}"
+        f"{'Date':<12}"
+    )
+    print("-" * 85)
+
+    for expense in expenses:
+        print(
+            f"{expense['id']:<6}"
+            f"₹{expense['amount']:<14.2f}"
+            f"{expense['category'][:16]:<18}"
+            f"{expense['description'][:26]:<28}"
+            f"{expense['date']:<12}"
+        )
+
+    print("-" * 85)
+
+
+# Display expense summary
+def expense_summary(expenses):
+    print("\n--- Expense Summary ---")
+
+    if not expenses:
+        print("No expenses recorded.")
+        return
+
+    total = sum(expense["amount"] for expense in expenses)
+
+    print(f"Total number of expenses : {len(expenses)}")
+    print(f"Total amount spent       : ₹{total:.2f}")
+
+    categories = {}
+
+    for expense in expenses:
+        category = expense["category"]
+        categories[category] = categories.get(category, 0) + expense["amount"]
+
+    print("\nCategory-wise Spending:")
+
+    for category, amount in sorted(categories.items()):
+        print(f"{category:<20} ₹{amount:.2f}")
+
+
+# Search expenses by category
+def search_category(expenses):
+    print("\n--- Search Expense ---")
+
+    if not expenses:
+        print("No expenses recorded.")
+        return
+
+    category = input("Enter category to search: ").strip().lower()
+
+    results = [
+        expense
+        for expense in expenses
+        if expense["category"].lower() == category
+    ]
+
+    if not results:
+        print("No expenses found for this category.")
+        return
+
+    print("\nMatching Expenses:")
+
+    for expense in results:
+        print(
+            f"ID: {expense['id']} | "
+            f"Amount: ₹{expense['amount']:.2f} | "
+            f"Category: {expense['category']} | "
+            f"Description: {expense['description']} | "
+            f"Date: {expense['date']}"
+        )
+
+
+# Delete an expense
+def delete_expense(expenses):
+    print("\n--- Delete Expense ---")
+
+    if not expenses:
+        print("No expenses available.")
+        return
+
+    try:
+        expense_id = int(input("Enter expense ID to delete: "))
+    except ValueError:
+        print("Please enter a valid ID.")
+        return
+
+    expense = next(
+        (item for item in expenses if item["id"] == expense_id),
+        None
+    )
+
+    if expense is None:
+        print("Expense not found.")
+        return
+
+    expenses.remove(expense)
+    save_expenses(expenses)
+
+    print("Expense deleted successfully!")
+
+
+# Display main menu
+def display_menu():
+    print("\n" + "=" * 45)
+    print("       PERSONAL EXPENSE TRACKER")
+    print("=" * 45)
+    print("1. Add Expense")
+    print("2. View All Expenses")
+    print("3. Expense Summary")
+    print("4. Search by Category")
+    print("5. Delete Expense")
+    print("6. Exit")
+    print("=" * 45)
+
+
+# Main program
+def main():
+    expenses = load_expenses()
+
+    while True:
+        display_menu()
+
+        choice = input("Enter your choice: ").strip()
+
+        if choice == "1":
+            add_expense(expenses)
+
+        elif choice == "2":
+            view_expenses(expenses)
+
+        elif choice == "3":
+            expense_summary(expenses)
+
+        elif choice == "4":
+            search_category(expenses)
+
+        elif choice == "5":
+            delete_expense(expenses)
+
+        elif choice == "6":
+            print("\nThank you for using Personal Expense Tracker!")
+            break
+
+        else:
+            print("Invalid choice. Please select 1 to 6.")
+
+
+# Start the application
+if __name__ == "__main__":
+    main()[]
+[]
